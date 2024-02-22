@@ -41,7 +41,7 @@
 
     class Box extends THREE.Mesh {                   
 
-      constructor ({width, height , depth, color = "0x00ff00" , velocity ={x:0 , y:0 , z:0} , position ={ x:0 , y:0 , z:0}}) {  
+      constructor ({width, height , depth, color = "0x00ff00" , velocity ={x:0 , y:0 , z:0} , position ={ x:0 , y:0 , z:0} , zAccelration = false}) {  
         super (new THREE.BoxGeometry(width, height , depth) , 
               new THREE.MeshStandardMaterial({ color }))
         
@@ -63,6 +63,7 @@
         this.velocity = velocity
         this.gravity = -0.002
 
+        this.zAccelration = zAccelration
       }
 
       updateSides () {
@@ -78,6 +79,9 @@
       }
       update (ground) {
         this.updateSides()
+
+        if (this.zAccelration) this.velocity.z += 0.0003
+
         this.position.x += this.velocity.x
         this.position.z += this.velocity.z
 
@@ -192,12 +196,28 @@ switch (event.code) {
 }
     })
 
+    //enemies setup and mapping
+
+    const enemy = new Box ({ 
+    width:1 ,
+    height:1 ,
+    depth:1 ,
+    color : "#ff00ff",
+    velocity : {x:0 , y:0 , z:0.005} ,
+    position : {x:0 , y: 0 , z: -4} ,
+    zAccelration : true
+  })
+    
+    enemy.castShadow = true
+    scene.add(enemy)
+
+    const enemies = [enemy]
 
    
   //animate function for the cube
 
     function animate() {                  
-      requestAnimationFrame(animate)
+      const animationID = requestAnimationFrame(animate)
       renderer.render(scene, camera)
 
       //movement of the cube
@@ -212,6 +232,11 @@ switch (event.code) {
       
 
       cube.update(ground)
+
+      enemies.forEach(enemy => {
+        enemy.update(ground)
+        if (boxCollision({box1:cube , box2 : enemy})) {cancelAnimationFrame (animationID)}
+      })
     
       // cube.rotation.x += 0.01
       // cube.rotation.y += 0.01
