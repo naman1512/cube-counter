@@ -1,7 +1,10 @@
 <style>
     body {
       margin: 0;
+      background: #76cad8;
+      background: linear-gradient(to right bottom, #4fc2da, #0693ff);
     }
+
   </style>
   
   <script
@@ -29,8 +32,13 @@
       0.1,
       1000
     )
-  
-    const renderer = new THREE.WebGLRenderer()
+
+    camera.position.set(4.61 , 2.74 , 8);
+    
+    const renderer = new THREE.WebGLRenderer({
+      alpha : true,
+      antialias : true
+    })
     renderer.shadowMap.enabled = true
     renderer.setSize(window.innerWidth, window.innerHeight)
     document.body.appendChild(renderer.domElement)
@@ -96,7 +104,8 @@
         //position where the cube hits the ground
         if (boxCollision(
           {box1:this , box2: ground})) {
-          this.velocity.y *= 0.8
+           const friction = 0.5
+          this.velocity.y *= friction
           this.velocity.y = -this.velocity.y}
         else this.position.y += this.velocity.y
       }
@@ -129,24 +138,28 @@
 
     //ground
     const ground = new Box ({    
-      width: 5,
+      width: 10,
       height: 0.5,
-      depth: 10,
-      color: "#ff0000",
+      depth: 50,
+      color: "#00FFFF",
       position : {x:0 , y: -2 , z: 0}
     })
   
     ground.receiveShadow = true
     scene.add(ground)
 
+  
+
     // light for the setup
 
     const light = new THREE.DirectionalLight(0xffffff,1) 
-    light.position.z = 2
+    light.position.z = 1
     light.position.y = 3
     light.castShadow = true
     scene.add(light)
   
+    scene.add (new THREE.AmbientLight(0xffffff , 0.5))
+
     camera.position.z = 5
 
     const keys = {
@@ -162,6 +175,8 @@
         w : {
           pressed : false
         },
+
+       
     }
 
 
@@ -177,10 +192,13 @@ switch (event.code) {
   break;
   case 'KeyW' : keys.w.pressed = true
   break;
+  case 'Space': cube.velocity.y = 0.08
+  break;
   
 }
     })
 
+    //when key is released
     window.addEventListener ('keyup' , (event) => {
 switch (event.code) {
 
@@ -198,22 +216,9 @@ switch (event.code) {
 
     //enemies setup and mapping
 
-    const enemy = new Box ({ 
-    width:1 ,
-    height:1 ,
-    depth:1 ,
-    color : "#ff00ff",
-    velocity : {x:0 , y:0 , z:0.005} ,
-    position : {x:0 , y: 0 , z: -4} ,
-    zAccelration : true
-  })
-    
-    enemy.castShadow = true
-    scene.add(enemy)
-
-    const enemies = [enemy]
-
-   
+    const enemies = []
+    let frames = 0
+    let spawnRate = 200
   //animate function for the cube
 
     function animate() {                  
@@ -237,7 +242,26 @@ switch (event.code) {
         enemy.update(ground)
         if (boxCollision({box1:cube , box2 : enemy})) {cancelAnimationFrame (animationID)}
       })
+
+      //enemies spawning and movement
+      if(frames % spawnRate ===0 ){
+        if (spawnRate >20) spawnRate -= 20 
+        const enemy = new Box ({ 
+    width:1 ,
+    height:1 ,
+    depth:1 ,
+    color : "#ff0000",
+    velocity : {x:0 , y:0 , z:0.005} ,
+    position : {x: (Math.random() - 0.5 ) * 10 , y: 0 , z: -20} ,
+    zAccelration : true
+  })
     
+    enemy.castShadow = true
+    scene.add(enemy)
+        enemies.push(enemy)
+      }
+
+      frames++
       // cube.rotation.x += 0.01
       // cube.rotation.y += 0.01
     }
